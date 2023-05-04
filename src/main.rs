@@ -88,7 +88,6 @@ fn fetch_and_print() {
 
     let path = format!("{}/{}", env::var("HOME").unwrap(), DOTFILE);
     let mut f = File::options()
-        // .create_new(true)
         .create(true)
         .write(true)
         .open(path)
