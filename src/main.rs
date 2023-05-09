@@ -7,6 +7,8 @@ use std::str::FromStr;
 
 use quick_xml::events::Event;
 use quick_xml::reader::Reader;
+use substring::Substring;
+use terminal_size::{terminal_size, Height, Width};
 
 const DOTFILE: &str = ".hn2";
 
@@ -87,18 +89,37 @@ fn fetch_and_print() {
     let articles: Vec<Article> = parse_articles_from_xml(&rss_data);
 
     let path = format!("{}/{}", env::var("HOME").unwrap(), DOTFILE);
-    let mut f = File::options()
-        .create(true)
-        .write(true)
-        .open(path)
-        .unwrap();
+    let mut f = File::options().create(true).write(true).open(path).unwrap();
 
-    let mut count = 0;
-    for article in articles {
-        count += 1;
+    let term_size = terminal_size();
+    if let Some((Width(w), Height(h))) = term_size {
+        let mut count = 0;
+        for article in articles {
+            count += 1;
+            if count > (h - 1) {
+                break;
+            }
 
-        println!("{}\t{}", count, article.title);
-        writeln!(&mut f, "{}\t{}", article.title, article.link).unwrap();
+            writeln!(&mut f, "{}\t{}", article.title, article.link).unwrap();
+
+            let title_limit = usize::from(w - 7);
+            if article.title.len() <= title_limit {
+                println!("{:2} {}", count, article.title);
+            } else {
+                let title_trimmed = &article.title.substring(0, title_limit);
+
+                println!("{:2} {}...", count, title_trimmed);
+            }
+        }
+    } else {
+        // Unable to get terminal size; just dump all.
+        let mut count = 0;
+        for article in articles {
+            count += 1;
+
+            println!("{}\t{}", count, article.title);
+            writeln!(&mut f, "{}\t{}", article.title, article.link).unwrap();
+        }
     }
 }
 
