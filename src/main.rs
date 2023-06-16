@@ -68,6 +68,10 @@ fn parse_articles_from_disk() -> Vec<Article> {
         match line_maybe {
             Ok(line) => {
                 let tokens = line.split("\t").collect::<Vec<_>>();
+                if tokens.len() == 1 {
+                    continue;
+                }
+
                 articles.push(Article {
                     title: String::from(tokens[0]),
                     link: String::from(tokens[1]),
